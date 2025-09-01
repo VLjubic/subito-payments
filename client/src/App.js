@@ -13,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Overview />} />
           <Route path="/addPayment" element={<AddPayment />} />
+          <Route path="/pre" element={<Overview2 />} />
         </Routes>
       </div>
     </Router>

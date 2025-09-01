@@ -4,7 +4,7 @@ function AddPayment() {
   const [form, setForm] = useState({
     entityId: "",
     amount: "",
-    paid_date: "",
+    paidDate: "",
   });
 
   const handleChange = (e) => {
@@ -20,7 +20,7 @@ function AddPayment() {
     });
     if (res.ok) {
       alert("Payment added successfully!");
-      setForm({ entityId: "", amount: "", paid_date: "" });
+      setForm({ entityId: "", amount: "", paidDate: "" });
     } else {
       alert("Error adding payment");
     }
@@ -54,8 +54,8 @@ function AddPayment() {
           Paid Date:
           <input
             type="date"
-            name="paid_date"
-            value={form.paid_date}
+            name="paidDate"
+            value={form.paidDate}
             onChange={handleChange}
             required
           />

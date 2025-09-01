@@ -29,7 +29,6 @@ coverage/
 
 # Build artifacts
 dist/
-build/
 tmp/
 temp/
 

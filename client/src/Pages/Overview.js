@@ -43,7 +43,7 @@ function Overview() {
                   <tr>
                     <th>Entity</th>
                     <th>Amount</th>
-                    <th>Paid Date</th>
+                    <th>Paid Date test</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -54,7 +54,7 @@ function Overview() {
                       <td>
                         {p.paidDate
                           ? new Date(p.paidDate).toLocaleDateString()
-                          : "-"}
+                          : p}
                       </td>
                     </tr>
                   ))}

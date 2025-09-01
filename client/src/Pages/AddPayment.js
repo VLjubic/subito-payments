@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 function AddPayment() {
   const [form, setForm] = useState({
-    entityId: "",
+    entity: "",
     amount: "",
     paidDate: "",
   });
@@ -20,7 +20,7 @@ function AddPayment() {
     });
     if (res.ok) {
       alert("Payment added successfully!");
-      setForm({ entityId: "", amount: "", paidDate: "" });
+      setForm({ entity: "", amount: "", paidDate: "" });
     } else {
       alert("Error adding payment");
     }
@@ -34,8 +34,8 @@ function AddPayment() {
           Entity ID:
           <input
             type="text"
-            name="entityId"
-            value={form.entityId}
+            name="entity"
+            value={form.entity}
             onChange={handleChange}
             required
           />

@@ -14,10 +14,6 @@ app.use(bodyParser.json());
 // Serve static files from /client
 app.use(express.static(path.join(__dirname, "client/build")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build/index.html"));
-});
-
 const DB_NAME = process.env.DB_NAME || process.env.APPSETTING_DB_NAME;
 const DB_USER = process.env.DB_USER || process.env.APPSETTING_DB_USER;
 const DB_PASS = process.env.DB_PASS || process.env.APPSETTING_DB_PASS;

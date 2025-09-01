@@ -52,8 +52,8 @@ function Overview() {
                       <td>{p.entity}</td>
                       <td>{p.amount ?? "-"}</td>
                       <td>
-                        {p.paid_date
-                          ? new Date(p.paid_date).toLocaleDateString()
+                        {p.paidDate
+                          ? new Date(p.paidDate).toLocaleDateString()
                           : "-"}
                       </td>
                     </tr>

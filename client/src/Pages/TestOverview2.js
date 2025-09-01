@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-function Overview2() {
+function TestOverview2() {
   const [payments, setPayments] = useState([]);
   const [grouped, setGrouped] = useState({});
 
@@ -68,4 +68,4 @@ function Overview2() {
   );
 }
 
-export default Overview2;
+export default TestOverview2;

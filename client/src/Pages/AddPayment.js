@@ -17,7 +17,7 @@ function AddPayment() {
       });
       if (res.ok) {
         setEntities(res.data);
-        console.log("entities: ", entities);
+        console.log("entities: ", res.data);
       } else {
         alert("Error getting entities");
       }
@@ -54,13 +54,19 @@ function AddPayment() {
           <form className="payment-form" onSubmit={handleSubmit}>
             <label>
               Entity ID:
-              <input
-                type="text"
+              <select
                 name="entity"
                 value={form.entity}
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">-- Select an entity --</option>
+                {entities.map((entity) => (
+                  <option key={entity.id} value={entity.id}>
+                    {entity.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
               Amount:

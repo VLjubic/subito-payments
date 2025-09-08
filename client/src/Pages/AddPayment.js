@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function AddPayment() {
   const [form, setForm] = useState({
@@ -6,6 +6,26 @@ function AddPayment() {
     amount: "",
     paidDate: "",
   });
+
+  const [entities, setEntities] = useState(null);
+
+  useEffect(() => {
+    const getEntities = async (e) => {
+      const res = await fetch("/api/entities", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setEntities(res.data);
+        console.log("entities: ", entities);
+      } else {
+        alert("Error getting entities");
+      }
+    };
+
+    getEntities();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -28,6 +48,7 @@ function AddPayment() {
 
   return (
     <div>
+      ({entities} && <div>Loading entities</div>) ({entities} &&{" "}
       <h2>Add Payment</h2>
       <form className="payment-form" onSubmit={handleSubmit}>
         <label>
@@ -64,6 +85,7 @@ function AddPayment() {
           Submit
         </button>
       </form>
+      )
     </div>
   );
 }

@@ -14,7 +14,7 @@ function Login({ setLogedIn }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password === "123123") {
-      setLogedIn();
+      setLogedIn(true);
     } else {
       alert("Wrong password");
       setForm({ password: "" });

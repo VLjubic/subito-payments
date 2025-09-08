@@ -14,7 +14,6 @@ function AddPayment() {
       const res = await fetch("/api/entities", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
       });
       if (res.ok) {
         setEntities(res.data);
@@ -48,44 +47,47 @@ function AddPayment() {
 
   return (
     <div>
-      ({entities} && <div>Loading entities</div>) ({entities} &&{" "}
-      <h2>Add Payment</h2>
-      <form className="payment-form" onSubmit={handleSubmit}>
-        <label>
-          Entity ID:
-          <input
-            type="text"
-            name="entity"
-            value={form.entity}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <label>
-          Amount:
-          <input
-            type="number"
-            name="amount"
-            value={form.amount}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <label>
-          Paid Date:
-          <input
-            type="date"
-            name="paidDate"
-            value={form.paidDate}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <button type="submit" className="btn">
-          Submit
-        </button>
-      </form>
-      )
+      {entities && <div>Loading entities</div>}{" "}
+      {!entities && (
+        <>
+          <h2>Add Payment</h2>
+          <form className="payment-form" onSubmit={handleSubmit}>
+            <label>
+              Entity ID:
+              <input
+                type="text"
+                name="entity"
+                value={form.entity}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Amount:
+              <input
+                type="number"
+                name="amount"
+                value={form.amount}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Paid Date:
+              <input
+                type="date"
+                name="paidDate"
+                value={form.paidDate}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <button type="submit" className="btn">
+              Submit
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }

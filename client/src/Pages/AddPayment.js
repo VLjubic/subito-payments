@@ -47,8 +47,8 @@ function AddPayment() {
 
   return (
     <div>
-      {entities && <div>Loading entities</div>}{" "}
-      {!entities && (
+      {!entities && <div>Loading entities</div>}{" "}
+      {entities && (
         <>
           <h2>Add Payment</h2>
           <form className="payment-form" onSubmit={handleSubmit}>

@@ -16,8 +16,9 @@ function AddPayment() {
         headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
-        setEntities(res.data);
-        console.log("entities: ", res.data);
+        const data = await res.json();
+        setEntities(data);
+        console.log("entities: ", data);
       } else {
         alert("Error getting entities");
       }

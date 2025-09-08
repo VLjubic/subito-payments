@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-function Navbar({ isLogedIn }) {
+function Navbar({ logedIn }) {
   return (
-    isLogedIn && (
+    logedIn && (
       <nav className="navbar">
         <div className="navbar-container">
           <h1 className="logo">Subito Payments</h1>

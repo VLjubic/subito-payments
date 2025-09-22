@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const { Sequelize, DataTypes, Op } = require("sequelize");
 require("dotenv").config();
 
@@ -10,6 +12,8 @@ const DB_USER = process.env.DB_USER;
 const DB_PASS = process.env.DB_PASS;
 const DB_HOST = process.env.DB_HOST;
 const DB_PORT = process.env.DB_PORT;
+
+const JWT_SECRET = process.env.JWT_KEY;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,9 +38,28 @@ const User = sequelize.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 const Entity = sequelize.define("Entity", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  categoryID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+});
+
+const EntityCategory = sequelize.define("EntityCategory", {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -60,6 +83,67 @@ const Payment = sequelize.define("Payment", {
 
 Entity.hasMany(Payment);
 Payment.belongsTo(Entity);
+
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { username } });
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/signup", async (req, res) => {
+  const { username, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+
+  console.log(username, password, hashed);
+
+  await User.create({
+    name: username,
+    username,
+    password: hashed,
+  });
+
+  res.json({ success: true });
+});
+
+// Verify token
+app.get("/api/verifyToken", (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ valid: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ valid: false, error: "Invalid token" });
+  }
+});
 
 app.get("/api/entities/:type", async (req, res) => {
   let type = req.params.type;

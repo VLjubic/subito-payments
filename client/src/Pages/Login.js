@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Login({ setLogedIn }) {
-  const [form, setForm] = useState({
-    password: "",
-  });
+function Login({ logedIn, setLogedIn }) {
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (logedIn) {
+      navigate("/home");
+    }
+  }, [logedIn, navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,22 +18,47 @@ function Login({ setLogedIn }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password === "123123") {
+    setError("");
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Login failed");
+      }
+
+      const data = await res.json();
+      localStorage.setItem("token", data.token); // save JWT
       setLogedIn(true);
       navigate("/home");
-    } else {
-      alert("Wrong password");
-      setForm({ password: "" });
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   return (
-    <div>
-      <form className="payment-form" onSubmit={handleSubmit}>
+    <div className="loginContainer">
+      <h2>Dobrodošli u Subito plaćanja</h2>
+      <form className="loginForm" onSubmit={handleSubmit}>
+        <label>
+          Username:
+          <input
+            type="text"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+        </label>
         <label>
           Password:
           <input
-            type="text"
+            type="password"
             name="password"
             value={form.password}
             onChange={handleChange}
@@ -38,8 +66,9 @@ function Login({ setLogedIn }) {
           />
         </label>
         <button type="submit" className="btn">
-          Submit
+          Login
         </button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </form>
     </div>
   );

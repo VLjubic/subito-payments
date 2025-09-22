@@ -27,6 +27,17 @@
 .App-link {
   color: #61dafb;
 }
+.geniusContainer,
+.overviewContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+.months-row > .active {
+  background: #055c05;
+  font-weight: bold;
+  color: gold;
+}
 
 @keyframes App-logo-spin {
   from {

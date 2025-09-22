@@ -2,23 +2,26 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize, DataTypes, Op } = require("sequelize");
+require("dotenv").config();
+
+const DB_NAME = process.env.DB_NAME;
+const DB_USER = process.env.DB_USER;
+const DB_PASS = process.env.DB_PASS;
+const DB_HOST = process.env.DB_HOST;
+const DB_PORT = process.env.DB_PORT;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Serve static files from /client
-app.use(express.static(path.join(__dirname, "client/build")));
-
-const DB_NAME = process.env.DB_NAME || process.env.APPSETTING_DB_NAME;
-const DB_USER = process.env.DB_USER || process.env.APPSETTING_DB_USER;
-const DB_PASS = process.env.DB_PASS || process.env.APPSETTING_DB_PASS;
-const DB_HOST = process.env.DB_HOST || process.env.APPSETTING_DB_HOST;
-const DB_PORT = process.env.DB_PORT || process.env.APPSETTING_DB_PORT;
+if (process.env.NODE_ENV === "production") {
+  // Serve static files from /client
+  app.use(express.static(path.join(__dirname, "client/build")));
+}
 
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   host: DB_HOST,
@@ -58,8 +61,19 @@ const Payment = sequelize.define("Payment", {
 Entity.hasMany(Payment);
 Payment.belongsTo(Entity);
 
-app.get("/api/entities", async (req, res) => {
-  const entities = await Entity.findAll();
+app.get("/api/entities/:type", async (req, res) => {
+  let type = req.params.type;
+  let categoryIDs = [];
+  if (type === "gov") {
+    categoryIDs = [1, 2, 3];
+  } else if (type === "genius") {
+    categoryIDs = [4];
+  }
+  const entities = await Entity.findAll({
+    where: {
+      categoryID: categoryIDs,
+    },
+  });
   res.json(entities);
 });
 
@@ -69,50 +83,51 @@ app.post("/api/payments", async (req, res) => {
   res.json(payment);
 });
 
-app.get("/api/payments/overview", async (req, res) => {
+app.get("/api/payments/overview/:type", async (req, res) => {
+  let type = req.params.type;
+  let categoryIDs = [];
+
+  if (type === "gov") {
+    categoryIDs = [1, 2, 3];
+  } else if (type === "genius") {
+    categoryIDs = [4];
+  }
+
   try {
-    // Get all unique (year, month) combinations from Payment.paidDate
+    // Fetch all payments for given categories
     const payments = await Payment.findAll({
-      attributes: [
-        [Sequelize.fn("YEAR", Sequelize.col("paidDate")), "year"],
-        [Sequelize.fn("MONTH", Sequelize.col("paidDate")), "month"],
+      include: [
+        {
+          model: Entity,
+          attributes: ["id", "name", "categoryID"],
+          where: {
+            categoryID: categoryIDs,
+          },
+        },
       ],
-      group: ["year", "month"],
-      order: [
-        [Sequelize.fn("YEAR", Sequelize.col("paidDate")), "ASC"],
-        [Sequelize.fn("MONTH", Sequelize.col("paidDate")), "ASC"],
-      ],
+      attributes: ["id", "EntityId", "amount", "paidDate"],
+      order: [["paidDate", "DESC"]],
       raw: true,
+      nest: true,
     });
 
-    const entities = await Entity.findAll();
-    const data = [];
+    const data = {};
 
-    for (let entry of payments) {
-      const { year, month } = entry;
+    for (let p of payments) {
+      if (!p.paidDate) continue;
 
-      for (let entity of entities) {
-        const payment = await Payment.findOne({
-          where: Sequelize.and(
-            Sequelize.where(
-              Sequelize.fn("MONTH", Sequelize.col("paidDate")),
-              month
-            ),
-            Sequelize.where(
-              Sequelize.fn("YEAR", Sequelize.col("paidDate")),
-              year
-            ),
-            { EntityId: entity.id }
-          ),
-        });
+      const date = new Date(p.paidDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
 
-        data.push({
-          month: `${year}-${String(month).padStart(2, "0")}`,
-          entity: entity.name,
-          amount: payment?.amount ?? null,
-          paidDate: payment?.paidDate ?? null,
-        });
-      }
+      if (!data[year]) data[year] = {};
+      if (!data[year][month]) data[year][month] = [];
+
+      data[year][month].push({
+        entity: p.Entity.name,
+        amount: p.amount,
+        paidDate: p.paidDate,
+      });
     }
 
     res.json(data);

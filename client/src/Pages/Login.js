@@ -17,7 +17,7 @@ function Login({ setLogedIn }) {
     e.preventDefault();
     if (form.password === "123123") {
       setLogedIn(true);
-      navigate("/overview");
+      navigate("/home");
     } else {
       alert("Wrong password");
       setForm({ password: "" });

@@ -93,14 +93,9 @@ app.post("/api/login", async (req, res) => {
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-    try {
-      const valid = await bcrypt.compare(password, user.password);
-      if (!valid) {
-        return res.status(401).json({ error: "Invalid password" });
-      }
-    } catch (err) {
-      console.error("Error comparing passwords:", err);
-      return res.status(401).json({ error: "sranje", err });
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid password" });
     }
 
     const token = jwt.sign(

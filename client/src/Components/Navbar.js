@@ -1,17 +1,29 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-function Navbar() {
+function Navbar({ logedIn }) {
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <h1 className="logo">Subito Payments</h1>
-        <div className="nav-links">
-          <Link to="/">Overview</Link>
-          <Link to="/addPayment">Add Payment</Link>
+    logedIn && (
+      <nav className="navbar">
+        <div className="navbar-container">
+          <h1 className="logo">Subito Payments</h1>
+          <div className="nav-links">
+            <Link to="/home">Home</Link>
+            <Link to="/gov">Obrt</Link>
+            <Link to="/genius">Genius</Link>
+            <button
+              className="btn logout-btn"
+              onClick={() => {
+                localStorage.removeItem("token");
+                window.location.href = "/";
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    )
   );
 }
 

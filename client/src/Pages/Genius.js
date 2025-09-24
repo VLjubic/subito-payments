@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AddPaymentForm from "../Components/AddPaymentForm";
+import PaymentOverview from "../Components/PaymentOverview";
 
-function AddPayment() {
+function Genius({}) {
   const [form, setForm] = useState({
     entity: "",
     amount: "",
@@ -9,10 +11,11 @@ function AddPayment() {
   });
 
   const [entities, setEntities] = useState(null);
+  const [grouped, setGrouped] = useState({});
 
   useEffect(() => {
     const getEntities = async (e) => {
-      const res = await fetch("/api/govermentEntities", {
+      const res = await fetch("/api/entities/genius", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -25,6 +28,14 @@ function AddPayment() {
     };
 
     getEntities();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/payments/overview/genius")
+      .then((res) => res.json())
+      .then((data) => {
+        setGrouped(data);
+      });
   }, []);
 
   const handleChange = (e) => {
@@ -47,13 +58,16 @@ function AddPayment() {
   };
 
   return (
-    <AddPaymentForm
-      entities={entities}
-      handleSubmit={handleSubmit}
-      handleChange={handleChange}
-      form={form}
-    />
+    <div className="geniusContainer">
+      <PaymentOverview dates={grouped} title={"Genius ulaganja"} />
+      <AddPaymentForm
+        entities={entities}
+        handleSubmit={handleSubmit}
+        handleChange={handleChange}
+        form={form}
+      />
+    </div>
   );
 }
 
-export default AddPayment;
+export default Genius;

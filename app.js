@@ -2,23 +2,30 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
-const { Sequelize, DataTypes } = require("sequelize");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { Sequelize, DataTypes, Op } = require("sequelize");
+require("dotenv").config();
+
+const DB_NAME = process.env.DB_NAME;
+const DB_USER = process.env.DB_USER;
+const DB_PASS = process.env.DB_PASS;
+const DB_HOST = process.env.DB_HOST;
+const DB_PORT = process.env.DB_PORT;
+
+const JWT_SECRET = process.env.JWT_KEY;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Serve static files from /client
-app.use(express.static(path.join(__dirname, "client/build")));
-
-const DB_NAME = process.env.DB_NAME || process.env.APPSETTING_DB_NAME;
-const DB_USER = process.env.DB_USER || process.env.APPSETTING_DB_USER;
-const DB_PASS = process.env.DB_PASS || process.env.APPSETTING_DB_PASS;
-const DB_HOST = process.env.DB_HOST || process.env.APPSETTING_DB_HOST;
-const DB_PORT = process.env.DB_PORT || process.env.APPSETTING_DB_PORT;
+if (process.env.NODE_ENV === "production") {
+  // Serve static files from /client
+  app.use(express.static(path.join(__dirname, "client/build")));
+}
 
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   host: DB_HOST,
@@ -31,9 +38,28 @@ const User = sequelize.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 const Entity = sequelize.define("Entity", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  categoryID: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+});
+
+const EntityCategory = sequelize.define("EntityCategory", {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -58,8 +84,79 @@ const Payment = sequelize.define("Payment", {
 Entity.hasMany(Payment);
 Payment.belongsTo(Entity);
 
-app.get("/api/entities", async (req, res) => {
-  const entities = await Entity.findAll();
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { username } });
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/signup", async (req, res) => {
+  const { username, password } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+
+  console.log(username, password, hashed);
+
+  await User.create({
+    name: username,
+    username,
+    password: hashed,
+  });
+
+  res.json({ success: true });
+});
+
+// Verify token
+app.get("/api/verifyToken", (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ valid: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ valid: false, error: "Invalid token" });
+  }
+});
+
+app.get("/api/entities/:type", async (req, res) => {
+  let type = req.params.type;
+  let categoryIDs = [];
+  if (type === "gov") {
+    categoryIDs = [1, 2, 3];
+  } else if (type === "genius") {
+    categoryIDs = [4];
+  }
+  const entities = await Entity.findAll({
+    where: {
+      categoryID: categoryIDs,
+    },
+  });
   res.json(entities);
 });
 
@@ -69,50 +166,51 @@ app.post("/api/payments", async (req, res) => {
   res.json(payment);
 });
 
-app.get("/api/payments/overview", async (req, res) => {
+app.get("/api/payments/overview/:type", async (req, res) => {
+  let type = req.params.type;
+  let categoryIDs = [];
+
+  if (type === "gov") {
+    categoryIDs = [1, 2, 3];
+  } else if (type === "genius") {
+    categoryIDs = [4];
+  }
+
   try {
-    // Get all unique (year, month) combinations from Payment.paidDate
+    // Fetch all payments for given categories
     const payments = await Payment.findAll({
-      attributes: [
-        [Sequelize.fn("YEAR", Sequelize.col("paidDate")), "year"],
-        [Sequelize.fn("MONTH", Sequelize.col("paidDate")), "month"],
+      include: [
+        {
+          model: Entity,
+          attributes: ["id", "name", "categoryID"],
+          where: {
+            categoryID: categoryIDs,
+          },
+        },
       ],
-      group: ["year", "month"],
-      order: [
-        [Sequelize.fn("YEAR", Sequelize.col("paidDate")), "ASC"],
-        [Sequelize.fn("MONTH", Sequelize.col("paidDate")), "ASC"],
-      ],
+      attributes: ["id", "EntityId", "amount", "paidDate"],
+      order: [["paidDate", "DESC"]],
       raw: true,
+      nest: true,
     });
 
-    const entities = await Entity.findAll();
-    const data = [];
+    const data = {};
 
-    for (let entry of payments) {
-      const { year, month } = entry;
+    for (let p of payments) {
+      if (!p.paidDate) continue;
 
-      for (let entity of entities) {
-        const payment = await Payment.findOne({
-          where: Sequelize.and(
-            Sequelize.where(
-              Sequelize.fn("MONTH", Sequelize.col("paidDate")),
-              month
-            ),
-            Sequelize.where(
-              Sequelize.fn("YEAR", Sequelize.col("paidDate")),
-              year
-            ),
-            { EntityId: entity.id }
-          ),
-        });
+      const date = new Date(p.paidDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
 
-        data.push({
-          month: `${year}-${String(month).padStart(2, "0")}`,
-          entity: entity.name,
-          amount: payment?.amount ?? null,
-          paidDate: payment?.paidDate ?? null,
-        });
-      }
+      if (!data[year]) data[year] = {};
+      if (!data[year][month]) data[year][month] = [];
+
+      data[year][month].push({
+        entity: p.Entity.name,
+        amount: p.amount,
+        paidDate: p.paidDate,
+      });
     }
 
     res.json(data);

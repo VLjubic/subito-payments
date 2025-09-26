@@ -6,11 +6,14 @@ function Navbar({ logedIn }) {
     logedIn && (
       <nav className="navbar">
         <div className="navbar-container">
-          <h1 className="logo">Subito Payments</h1>
+          <h1 className="logo">Subito Tracker</h1>
           <div className="nav-links">
             <Link to="/home">Home</Link>
             <Link to="/gov">Obrt</Link>
             <Link to="/genius">Genius</Link>
+            <Link to="/workCalendar">Kalendar</Link>
+            <Link to="/addTask">Dodaj zadatak</Link>
+            <Link to="/administration">Administracija</Link>
             <button
               className="btn logout-btn"
               onClick={() => {

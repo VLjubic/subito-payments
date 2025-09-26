@@ -6,8 +6,11 @@ import Login from "./Pages/Login";
 import Genius from "./Pages/Genius";
 import Home from "./Pages/Home";
 import PrivateRoute from "./Components/PrivateRoute";
+import WorkCalendar from "./Pages/WorkCalendar";
 import "./App.css";
 import "./index.css";
+import AddTask from "./Pages/AddTask";
+import Administration from "./Pages/Administration";
 
 function App() {
   const [logedIn, setLogedIn] = useState(false);
@@ -66,6 +69,30 @@ function App() {
             element={
               <PrivateRoute logedIn={logedIn}>
                 <Genius />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/workCalendar"
+            element={
+              <PrivateRoute logedIn={logedIn}>
+                <WorkCalendar />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/addTask"
+            element={
+              <PrivateRoute logedIn={logedIn}>
+                <AddTask />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/administration"
+            element={
+              <PrivateRoute logedIn={logedIn}>
+                <Administration />
               </PrivateRoute>
             }
           />

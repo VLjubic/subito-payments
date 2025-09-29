@@ -4,19 +4,11 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { Sequelize, DataTypes, Op } = require("sequelize");
-require("dotenv").config();
-
-const DB_NAME = process.env.DB_NAME;
-const DB_USER = process.env.DB_USER;
-const DB_PASS = process.env.DB_PASS;
-const DB_HOST = process.env.DB_HOST;
-const DB_PORT = process.env.DB_PORT;
-
-const JWT_SECRET = process.env.JWT_KEY;
+const db = require("./models");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_KEY;
 
 // Middleware
 app.use(cors());
@@ -26,63 +18,15 @@ if (process.env.NODE_ENV === "production") {
   // Serve static files from /client
   app.use(express.static(path.join(__dirname, "client/build")));
 }
+const { User, Payment, Entity, sequelize, Sequelize } = db;
 
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
-  host: DB_HOST,
-  dialect: "mysql",
-  port: DB_PORT || 3306,
-});
+const calendarRoutes = require("./routes/calendar");
+const tasksRoutes = require("./routes/tasks");
+const adminRoutes = require("./routes/admin");
 
-const User = sequelize.define("User", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
-
-const Entity = sequelize.define("Entity", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  categoryID: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-});
-
-const EntityCategory = sequelize.define("EntityCategory", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
-
-const Payment = sequelize.define("Payment", {
-  amount: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-  paidDate: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  entityID: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-});
-
-Entity.hasMany(Payment);
-Payment.belongsTo(Entity);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/tasks", tasksRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;

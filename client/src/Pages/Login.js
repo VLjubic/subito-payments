@@ -43,7 +43,7 @@ function Login({ logedIn, setLogedIn }) {
 
   return (
     <div className="loginContainer">
-      <h2>Dobrodošli u Subito plaćanja</h2>
+      <h2>Dobrodošli u Subito Tracker app</h2>
       <form className="loginForm" onSubmit={handleSubmit}>
         <label>
           Username:

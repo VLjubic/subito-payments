@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       amount: { type: DataTypes.FLOAT, allowNull: false },
       paidDate: { type: DataTypes.DATE, allowNull: false },
-      entityID: { type: DataTypes.INTEGER, allowNull: true },
+      EntityId: { type: DataTypes.INTEGER, allowNull: true },
     },
     { timestamps: false }
   );
